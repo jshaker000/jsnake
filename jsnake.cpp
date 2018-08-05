@@ -4,6 +4,7 @@
 */
 #include <chrono>
 #include <ncurses.h>
+#include <random>
 #include <vector>
 
 #define MENU_HEIGHT     2
