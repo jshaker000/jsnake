@@ -7,11 +7,9 @@ A c++ implementation of snake using the ncures library
 
 Installation:
 
-This game uses ncurses library. 
+This game requires the ncurses library to compile 
 It can be installed easily through most UNIX package managers, 
 usually under the name ncurses or ncurses-dev
-
-It is required to compile and play the game
 
 The Makefile assumes you use the g++ compiler and that
 /usr/local/bin/ is a directory that is on the user's path
@@ -26,6 +24,7 @@ $make install    will copy the binary to /usr/local/bin/ , which
                  ( may require sudo privleges )
 $make clean      will remove the binaries from the local directory
 $make uninstall  will remove the binaries from /usr/local/bin/  
+                 ( may require sudo privleges )
 
 Any changed to the source code require 
 $make && make install
@@ -37,18 +36,20 @@ Source code options:
 Many options are available by changing constants on the 
 #define sections of the jsnake.cpp file
 
-1) STARTING_LENGTH defines how long the snake is to begin
-   Beware that long Starting lengths can cause near instant death on
-   spawn [ 10 is the default ]
+Here are a few:
 
-2) LENGTH_PER_FOOD determines how much the snake should grow per food eaten 
+STARTING_LENGTH defines how long the snake is to begin
+   Beware that long Starting lengths can cause near instant death on
+   spawn [ 5 is the default ]
+
+LENGTH_PER_FOOD determines how much the snake should grow per food eaten 
    [ 1 is the default ]
 
-3) 'COLS_PER_ROW' is a constant to try to make col/rows square
+'COLS_PER_ROW' is a constant to try to make col/rows square
    A value of 1 makes the grid 1 row per 1 col, a value of 2 makes the grid
    2 rows per 2 cols. [ 2 is default ]
 
-4) The game calculates frames once every 'TICK_LENGTH' ms
+The game calculates frames once every 'TICK_LENGTH' ms
    'VERT_RATIO'  is a multiplier so that ticks when the
    snake is traveling up/down are 'VERT_RATIO' * TICK_LENGTH ms 
    and ticks when the snake is going Left and Right are 'TICK_LENGTH' ms
@@ -58,16 +59,18 @@ Many options are available by changing constants on the
    TICK_LENGTH should be roughly from 40 - 100ms [ 105   is default ]
    VERT_RATIO should be roughly from 1 - 1.5     [ 1.00  is default ]
 
-5) The colors of the Snake_Head, Body, and Food can be adjsuted on the lines
+The colors of the Snake_Head, Body, and Food can be adjsuted on the lines
    starting init_pair
 
 /////////////////////////////////////////////////////////
 
 Future Work:
 
--A greeting menu with options for size, etc
--CLI options for a fixed size game, rather than scaling to terminal size
--Some file to store custom keybindings, local highscores, etc
+A greeting menu with options for size, etc
+
+CLI options for a fixed size game, rather than scaling to terminal size
+
+Some file to store custom keybindings, local highscores, etc
 
 /////////////////////////////////////////////////////////
 
