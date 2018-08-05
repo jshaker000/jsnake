@@ -5,29 +5,37 @@ A c++ implementation of snake using the ncures library
 
 ////////////////////////////////////////////////////////////
 
-To install 
+Installation:
 
 This game uses ncurses library. 
-It can be installed easily through most UNIX package manages, 
-under the name ncurses or ncurses-dev
+It can be installed easily through most UNIX package managers, 
+usually under the name ncurses or ncurses-dev
 
 It is required to compile and play the game
 
-$cd /path/to/jsnake/directory && make
+The Makefile assumes you use the g++ compiler and that
+/usr/local/bin/ is a directory that is on the user's path
+If not, further configuration may be required
 
-this make the executable 'jsnake'
+$make && make install
 
-$ ./jsnake
+$make            will compile the source code
+$make install    will copy the binary to /usr/local/bin/ , which 
+                 is part of the default path for most systems, allowing
+                 you to run the binary from any directory 
+                 ( may require sudo privleges )
+$make clean      will remove the binaries from the local directory
+$make uninstall  will remove the binaries from /usr/local/bin/  
 
-The Makefile assumes you use the g++ compiler, if not, you may
-need to do some manual configuration
+Any changed to the source code require 
+$make && make install
 
 ////////////////////////////////////////////////////////////
 
 Source code options:
 
 Many options are available by changing constants on the 
-#define sections of the CPP file
+#define sections of the jsnake.cpp file
 
 1) STARTING_LENGTH defines how long the snake is to begin
    Beware that long Starting lengths can cause near instant death on
@@ -51,7 +59,7 @@ Many options are available by changing constants on the
    VERT_RATIO should be roughly from 1 - 1.5     [ 1.00  is default ]
 
 5) The colors of the Snake_Head, Body, and Food can be adjsuted on the lines
-   init_pair
+   starting init_pair
 
 /////////////////////////////////////////////////////////
 
@@ -59,6 +67,7 @@ Future Work:
 
 -A greeting menu with options for size, etc
 -CLI options for a fixed size game, rather than scaling to terminal size
+-Some file to store custom keybindings, local highscores, etc
 
 /////////////////////////////////////////////////////////
 
