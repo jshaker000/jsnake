@@ -61,27 +61,27 @@ int main()
     getmaxyx( stdscr, ROWS, COLS );
 
     int temp  = COLS;
-    while ( ( temp - 2 ) % STATS_HEIGHT != 0 )
+    while ( ( temp - 2 ) % COLS_PER_ROW != 0 )
         temp--;
     
     const int cols = temp;
     const int rows = ROWS;
     resizeterm( rows, cols );
 
-    if ( rows < ( 3 + STATS_HEIGHT + PAUSE_HEIGHT ) 
+    if ( rows < ( 2 + STATS_HEIGHT + PAUSE_HEIGHT ) 
          || cols < ( std::max( STATS_WIDTH, PAUSE_WIDTH ) + 2 ) )
     {
         endwin();
-        printf("Terminal is too small to fit the stats\nMinimum Size:%3dx%2d\n", cols < ( STATS_WIDTH + 3 ),( 3 + STATS_HEIGHT + 11 ) );
+        printf("Terminal is too small to fit the stats\nMinimum Size:%3dx%2d\n", ( std::max( STATS_WIDTH, PAUSE_WIDTH ) + 2 + ( COLS - cols ) ),2 + STATS_HEIGHT + PAUSE_HEIGHT );
         return 1;
 
     }
 
-    if ( rows <= ( 3 + STATS_HEIGHT + STARTING_ROW ) 
-         || cols <= 2 + COLS_PER_ROW * ( STARTING_COL + STARTING_LEN ) )
+    if ( rows < ( 4 + STATS_HEIGHT + STARTING_ROW ) 
+         || cols < 3 + COLS_PER_ROW * ( STARTING_COL + STARTING_LEN ) )
     {
         endwin();
-        printf("Terminal is too small to fit the starting snake\nMinimum Size:%3dx%2d\n", cols < ( STATS_WIDTH + 3 ),( 3 + STATS_HEIGHT + 11 ) );
+        printf("Terminal is too small to fit the starting snake\nMinimum Size:%3dx%2d\n",3 + COLS_PER_ROW * ( STARTING_COL + STARTING_LEN ),rows < ( 4 + STATS_HEIGHT + STARTING_ROW )  );
         return 1;
 
     }
