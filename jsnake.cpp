@@ -97,7 +97,7 @@ int main()
     int game_cols = cols - 2;
 
     WINDOW* main_win = newwin( rows, cols, 0, 0 );
-    WINDOW* stats_win = newwin( STATS_HEIGHT, cols - 2  , 1, 1 );
+    WINDOW* stats_win= newwin( STATS_HEIGHT, cols - 2  , 1, 1 );
     WINDOW* game_win = newwin( game_rows , game_cols, 2 + STATS_HEIGHT, 1  );    
 
     draw_border( main_win, rows, cols, STATS_HEIGHT );
@@ -111,8 +111,8 @@ int main()
     {    
         std::vector <char> grid;    //rows are stored sequentially
                                     //row 0 col 5 is [ 5 ], row 1 col 5 is [ 1* numCols + 5]
-        							//lists all the places the snake is and what direction it was moving
-        							//for O(1) collision lookup and to 'follow' the tail every tick
+                                    //lists all the places the snake is and what direction it was moving
+                                    //for O(1) collision lookup and to 'follow' the tail every tick
 
         grid.resize( game_rows * game_cols / COLS_PER_ROW, 0 );
 
@@ -171,9 +171,9 @@ int main()
 
         while(!quit) 
         {
-        	//get user input until tick is over
-	        //do not allow user to go right if going left etc to kill themselves
-	        while( !tick_done )
+            //get user input until tick is over
+            //do not allow user to go right if going left etc to kill themselves
+            while( !tick_done )
             {
                 ch = getch();
             
