@@ -96,7 +96,6 @@ int main()
     int game_rows = rows - STATS_HEIGHT - 3;
     int game_cols = cols - 2;
 
-    //height, width, starty,startx
     WINDOW* main_win = newwin( rows, cols, 0, 0 );
     WINDOW* stats_win = newwin( STATS_HEIGHT, cols - 2  , 1, 1 );
     WINDOW* game_win = newwin( game_rows , game_cols, 2 + STATS_HEIGHT, 1  );    
@@ -112,6 +111,8 @@ int main()
     {    
         std::vector <char> grid;    //rows are stored sequentially
                                     //row 0 col 5 is [ 5 ], row 1 col 5 is [ 1* numCols + 5]
+        							//lists all the places the snake is and what direction it was moving
+        							//for O(1) collision lookup and to 'follow' the tail every tick
 
         grid.resize( game_rows * game_cols / COLS_PER_ROW, 0 );
 
@@ -131,19 +132,18 @@ int main()
         bool tick_done = 0;
 
         update_stats( stats_win, score, HIGH_SCORE, game_rows, game_cols);
-
-        std::chrono::steady_clock::time_point tick_start = std::chrono::steady_clock::now(); 
-        std::chrono::steady_clock::time_point tick_end   = std::chrono::steady_clock::now();
         
+        //initialize head and tail location of start snake
+        //Then initialize gird with the direction the snake was going at each point
+        //and draw the snake
         tail_col = STARTING_COL;
         tail_row = STARTING_ROW;
-        head_col = ( STARTING_COL + STARTING_LEN - 1 );
+        head_col = STARTING_COL + STARTING_LEN - 1 ;
         head_row = STARTING_ROW;
     
         old_head_col = ( STARTING_COL + STARTING_LEN - 2 );
         old_head_row = STARTING_ROW;
 
-        //generate and draw start snake
         wattron( game_win, COLOR_PAIR( BODY_PAIR ) );
         for( int i = 0; i < STARTING_LEN; i++ )  
         {
@@ -166,9 +166,14 @@ int main()
         
         wrefresh( game_win );
 
+        std::chrono::steady_clock::time_point tick_start = std::chrono::steady_clock::now(); 
+        std::chrono::steady_clock::time_point tick_end   = std::chrono::steady_clock::now();
+
         while(!quit) 
         {
-	        while( !tick_done )     //get user input until tick is over
+        	//get user input until tick is over
+	        //do not allow user to go right if going left etc to kill themselves
+	        while( !tick_done )
             {
                 ch = getch();
             
@@ -197,7 +202,7 @@ int main()
                         pause_menu( game_win, game_rows, game_cols );
                         redraw_snake( game_win, grid,game_rows, game_cols,  head_row,  head_col  );
                         tick_start = tick_end = std::chrono::steady_clock::now();
-                        nodelay(stdscr, TRUE);      //key inputs are nonblocking
+                        nodelay(stdscr, TRUE);
                         break;
                 }
                 
@@ -226,7 +231,7 @@ int main()
             old_head_row = head_row;
 
             //store the direction the snake is going so we can follow its new tail
-            grid[ ( game_cols / COLS_PER_ROW * head_row + head_col ) ] = dir; 
+            grid[ ( head_row * game_cols / COLS_PER_ROW + head_col ) ] = dir; 
 
             if     (dir == '^') head_row--;  // move up
             else if(dir == '>') head_col++;  // move right
@@ -238,7 +243,7 @@ int main()
                 queue += LENGTH_PER_FOOD;
             } 
 
-            //if the snake has some growing to do, increment score
+            //if the snake has some growing to do, increment score and dont clear tail
             if ( queue >= 1 )
             {
                 queue--;
@@ -256,7 +261,8 @@ int main()
                 }
             }
 
-            //'erase' the tail and update the tail variable based on the direction
+            //'erase' the tail visually and from grid
+            //and update the tail location based on the direction the snake was going
             else 
             {
                 wattron( game_win, COLOR_PAIR( 0 ) );
@@ -266,8 +272,8 @@ int main()
                 
                 wattroff( game_win, COLOR_PAIR( 0 ) );
                 
-                char temp = grid[ ( game_cols / COLS_PER_ROW * tail_row + tail_col ) ];
-                grid[ ( game_cols / COLS_PER_ROW * tail_row + tail_col ) ] = 0;
+                char temp = grid[ ( tail_row * game_cols/COLS_PER_ROW + tail_col ) ];
+                grid[ ( tail_row * game_cols/COLS_PER_ROW + tail_col ) ] = 0;
                 
                 switch ( temp  )
                 {
@@ -285,10 +291,15 @@ int main()
                         break;
                 }
             }
+
             //check for wall collision
             if(head_row > ( game_rows - 1 ) || head_col > ( game_cols - 1 )/COLS_PER_ROW || head_row < 0 || head_col < 0 )
-                quit = true;
-                
+                quit = 1;
+            
+            //check for self collision
+            if ( grid[ (game_cols/COLS_PER_ROW * head_row + head_col)]!=0)
+                quit = 1;
+   
             //make old head color of the body
             wattron( game_win, COLOR_PAIR( BODY_PAIR ) );
             for ( int i = 0; i < COLS_PER_ROW; i++)
@@ -301,12 +312,9 @@ int main()
                 mvwaddch( game_win, head_row, COLS_PER_ROW*head_col + i, ' ' );
             wattroff( game_win, COLOR_PAIR( BODY_PAIR ) );
 
-            //check for self collision
-            if ( grid[ (game_cols/COLS_PER_ROW * head_row + head_col)]!=0)
-                quit = 1;
 
-            //generate new food if need be
-            while ( grid[ game_cols/COLS_PER_ROW * FOOD_y + FOOD_x ] != 0 )
+            //generate new food if need be 
+            while ( grid[ FOOD_y * game_cols/COLS_PER_ROW + FOOD_x ] != 0 )
             {
                 FOOD_x = rand() % ( game_cols / COLS_PER_ROW )  ;
                 FOOD_y = rand() % game_rows;
