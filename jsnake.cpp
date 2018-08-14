@@ -314,7 +314,8 @@ int main()
 
 
             //generate new food if need be 
-            while ( grid[ FOOD_y * game_cols/COLS_PER_ROW + FOOD_x ] != 0 )
+            while ( grid[ FOOD_y * game_cols/COLS_PER_ROW + FOOD_x ] != 0 
+                    || ( FOOD_x == head_col && FOOD_y == head_row ) )
             {
                 FOOD_x = rand() % ( game_cols / COLS_PER_ROW )  ;
                 FOOD_y = rand() % game_rows;
