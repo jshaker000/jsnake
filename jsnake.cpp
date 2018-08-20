@@ -33,8 +33,8 @@ void draw_border ( WINDOW*, int, int, int );
 void pause_menu  ( WINDOW*, int, int );
 void update_stats( WINDOW*, int, int, int, int );
 int  lose_screen ( WINDOW*, int, int, int, int );
-void victory     ( WINDOW*, int, int, int, int );
-void redraw_snake( WINDOW*,  std::vector<char> , int , int ,int , int  );
+void victory     ( WINDOW*, int, int );
+void redraw_snake( WINDOW*, const std::vector<char> &, int , int ,int , int  );
 
 int main() 
 {
@@ -63,10 +63,18 @@ int main()
     int temp  = COLS;
     while ( ( temp - 2 ) % COLS_PER_ROW != 0 )
         temp--;
-    
+    //total size of the screen 
     const int cols = temp;
     const int rows = ROWS;
     resizeterm( rows, cols );
+
+    if ( !has_colors() )
+    {
+        endwin();
+        printf("Terminal does not support color.\n");
+        return 1;
+
+    }
 
     if ( rows < ( 2 + STATS_HEIGHT + PAUSE_HEIGHT ) 
          || cols < ( std::max( STATS_WIDTH, PAUSE_WIDTH ) + 2 ) )
@@ -92,15 +100,22 @@ int main()
         printf( "Starting length must be >=2\n");
         return 1;
     }
+    //'logical' size of the game screen
+    const int game_rows = rows - STATS_HEIGHT - 3;
+    const int game_cols = ( cols - 2 ) / COLS_PER_ROW;
+    std::vector <char> grid;    //rows are stored sequentially
+                                //row 0 col 5 is [ 5 ], row 1 col 5 is [ 1* numCols + 5]
+                                //lists all the places the snake is and what direction it was moving
+                                //for O(1) collision lookup and to 'follow' the tail every tick
 
-    int game_rows = rows - STATS_HEIGHT - 3;
-    int game_cols = cols - 2;
+    grid.resize( game_rows * game_cols );
+
 
     WINDOW* main_win = newwin( rows, cols, 0, 0 );
     WINDOW* stats_win= newwin( STATS_HEIGHT, cols - 2  , 1, 1 );
-    WINDOW* game_win = newwin( game_rows , game_cols, 2 + STATS_HEIGHT, 1  );    
+    WINDOW* game_win = newwin( game_rows , game_cols * COLS_PER_ROW, 2 + STATS_HEIGHT, 1  );
 
-    draw_border( main_win, rows, cols, STATS_HEIGHT );
+    draw_border ( main_win, rows, cols, STATS_HEIGHT );
     update_stats( stats_win, 0, HIGH_SCORE, game_rows, game_cols );
 
     refresh();
@@ -109,16 +124,12 @@ int main()
 
     while ( PLAY_AGAIN )
     {    
-        std::vector <char> grid;    //rows are stored sequentially
-                                    //row 0 col 5 is [ 5 ], row 1 col 5 is [ 1* numCols + 5]
-                                    //lists all the places the snake is and what direction it was moving
-                                    //for O(1) collision lookup and to 'follow' the tail every tick
+        for ( int i = 0; i < grid.size(); i++ )
+            grid[ i ] = 0;
 
-        grid.resize( game_rows * game_cols / COLS_PER_ROW, 0 );
-
-        nodelay(stdscr, TRUE);      
+        nodelay(stdscr, TRUE);
         
-        int FOOD_x = rand() % ( game_cols / COLS_PER_ROW );
+        int FOOD_x = rand() % game_cols;
         int FOOD_y = rand() % game_rows;
         int score  = 0;
         int ch     = 0;
@@ -145,9 +156,9 @@ int main()
         old_head_row = STARTING_ROW;
 
         wattron( game_win, COLOR_PAIR( BODY_PAIR ) );
-        for( int i = 0; i < STARTING_LEN; i++ )  
+        for( int i = 0; i < STARTING_LEN; i++ )
         {
-            grid[ ( STARTING_ROW * game_cols/COLS_PER_ROW + ( STARTING_COL + i ) ) ] = '>';
+            grid[ ( STARTING_ROW * game_cols + ( STARTING_COL + i ) ) ] = '>';
             if ( i!=STARTING_LEN-1 )
             {
                 for ( int j = 0; j < COLS_PER_ROW; j++)
@@ -169,7 +180,7 @@ int main()
         std::chrono::steady_clock::time_point tick_start = std::chrono::steady_clock::now(); 
         std::chrono::steady_clock::time_point tick_end   = std::chrono::steady_clock::now();
 
-        while(!quit) 
+        while(!quit)
         {
             //get user input until tick is over
             //do not allow user to go right if going left etc to kill themselves
@@ -199,8 +210,8 @@ int main()
                         quit = 1;
                         break;
                     case 'p':
-                        pause_menu( game_win, game_rows, game_cols );
-                        redraw_snake( game_win, grid,game_rows, game_cols,  head_row,  head_col  );
+                        pause_menu  ( game_win, game_rows, game_cols );
+                        redraw_snake( game_win, grid,game_rows, game_cols, head_row, head_col );
                         tick_start = tick_end = std::chrono::steady_clock::now();
                         nodelay(stdscr, TRUE);
                         break;
@@ -221,7 +232,7 @@ int main()
                 }
 
             }
-            
+
             tick_start = std::chrono::steady_clock::now();
             
             tick_done = 0;
@@ -231,7 +242,7 @@ int main()
             old_head_row = head_row;
 
             //store the direction the snake is going so we can follow its new tail
-            grid[ ( head_row * game_cols / COLS_PER_ROW + head_col ) ] = dir; 
+            grid[ ( head_row * game_cols + head_col ) ] = dir; 
 
             if     (dir == '^') head_row--;  // move up
             else if(dir == '>') head_col++;  // move right
@@ -253,14 +264,13 @@ int main()
 
                 update_stats( stats_win, score, HIGH_SCORE, game_rows, game_cols );
 
-                if ( score + STARTING_LEN == ( game_rows * game_cols ) / COLS_PER_ROW )
+                if ( score + STARTING_LEN == ( game_rows * game_cols ) )
                 {    
-                    victory( game_win, rows, cols, game_rows, game_cols );
+                    victory( game_win, game_rows, game_cols );
                     endwin();
                     return 0;
                 }
             }
-
             //'erase' the tail visually and from grid
             //and update the tail location based on the direction the snake was going
             else 
@@ -272,8 +282,8 @@ int main()
                 
                 wattroff( game_win, COLOR_PAIR( 0 ) );
                 
-                char temp = grid[ ( tail_row * game_cols/COLS_PER_ROW + tail_col ) ];
-                grid[ ( tail_row * game_cols/COLS_PER_ROW + tail_col ) ] = 0;
+                char temp = grid[ ( tail_row * game_cols + tail_col ) ];
+                grid[ ( tail_row * game_cols + tail_col ) ] = 0;
                 
                 switch ( temp  )
                 {
@@ -293,11 +303,11 @@ int main()
             }
 
             //check for wall collision
-            if(head_row > ( game_rows - 1 ) || head_col > ( game_cols - 1 )/COLS_PER_ROW || head_row < 0 || head_col < 0 )
+            if(head_row > ( game_rows - 1 ) || head_col > ( game_cols - 1 ) || head_row < 0 || head_col < 0 )
                 quit = 1;
             
             //check for self collision
-            if ( grid[ (game_cols/COLS_PER_ROW * head_row + head_col)]!=0)
+            if ( grid[ (game_cols * head_row + head_col) ]!=0)
                 quit = 1;
    
             //make old head color of the body
@@ -314,10 +324,10 @@ int main()
 
 
             //generate new food if need be 
-            while ( grid[ FOOD_y * game_cols/COLS_PER_ROW + FOOD_x ] != 0 
+            while ( grid[ FOOD_y * game_cols + FOOD_x ] != 0 
                     || ( FOOD_x == head_col && FOOD_y == head_row ) )
             {
-                FOOD_x = rand() % ( game_cols / COLS_PER_ROW )  ;
+                FOOD_x = rand() % game_cols;
                 FOOD_y = rand() % game_rows;
             }
            
@@ -358,7 +368,7 @@ void draw_border( WINDOW* win, int rows, int cols, int stats_size )
         wmove ( win, j, 0 );
         waddch( win, '|' );
         wmove ( win, j, cols - 1 );
-        waddch( win, '|' );        
+        waddch( win, '|' );
     }
 
     wmove ( win, 1 + stats_size, 0 );
@@ -384,42 +394,44 @@ void draw_border( WINDOW* win, int rows, int cols, int stats_size )
     refresh();
 }
 
-void pause_menu( WINDOW* win, int rows, int cols )
+void pause_menu( WINDOW* win, int game_rows, int game_cols )
 {     
     timeout( 3600000 );
-    mvwprintw( win, rows/2 -3, cols/2 - PAUSE_WIDTH/2,"========================================");
-    mvwprintw( win, rows/2 -2, cols/2 - PAUSE_WIDTH/2,"+++++++++++Welcome to  jSnake+++++++++++");
-    mvwprintw( win, rows/2 -1, cols/2 - PAUSE_WIDTH/2,"++++++++++++++Eat the Food++++++++++++++");
-    mvwprintw( win, rows/2 -0, cols/2 - PAUSE_WIDTH/2,"+++++++Use the Arrow Keys to Move+++++++");
-    mvwprintw( win, rows/2 +1, cols/2 - PAUSE_WIDTH/2,"+++Dont Crash into  Walls or Yourself+++");
-    mvwprintw( win, rows/2 +2, cols/2 - PAUSE_WIDTH/2,"++++++++Press  any Key to Resume++++++++");
-    mvwprintw( win, rows/2 +3, cols/2 - PAUSE_WIDTH/2,"========================================");
+    int cols = game_cols * COLS_PER_ROW;
+    mvwprintw( win, game_rows/2 -3, cols/2 - PAUSE_WIDTH/2,"========================================");
+    mvwprintw( win, game_rows/2 -2, cols/2 - PAUSE_WIDTH/2,"+++++++++++Welcome to  jSnake+++++++++++");
+    mvwprintw( win, game_rows/2 -1, cols/2 - PAUSE_WIDTH/2,"++++++++++++++Eat the Food++++++++++++++");
+    mvwprintw( win, game_rows/2 -0, cols/2 - PAUSE_WIDTH/2,"+++++++Use the Arrow Keys to Move+++++++");
+    mvwprintw( win, game_rows/2 +1, cols/2 - PAUSE_WIDTH/2,"+++Dont Crash into  Walls or Yourself+++");
+    mvwprintw( win, game_rows/2 +2, cols/2 - PAUSE_WIDTH/2,"++++++++Press  any Key to Resume++++++++");
+    mvwprintw( win, game_rows/2 +3, cols/2 - PAUSE_WIDTH/2,"========================================");
     wrefresh( win );
     char a = getch();
     wclear( win );
 }   
     
-void update_stats( WINDOW* win, int score, int high_score, int rows, int cols )
+void update_stats( WINDOW* win, int score, int high_score, int game_rows, int game_cols )
 {
     for ( int i = 0;i < STATS_HEIGHT; i++ )
     {   
         if ( i == 0)
             mvwprintw( win, i, 0, "Length:     %5d || Score:     %5d | High Score:  %5d", STARTING_LEN + score, score, high_score );
         else if ( i == 1 )
-            mvwprintw( win, 1, 0, "Game Size: %3dx%2d || Move: Arrow Keys | Quit: q | pause: p ",  cols / COLS_PER_ROW, rows);
+            mvwprintw( win, 1, 0, "Game Size: %3dx%2d || Move: Arrow Keys | Quit: q | Pause: p ", game_cols, game_rows );
         //etc
     }
     wrefresh( win );
 }
 
-int lose_screen( WINDOW* win, int score, int high_score, int rows, int cols)
+int lose_screen( WINDOW* win, int score, int high_score, int game_rows, int game_cols)
 {
     int a = 0;
-    mvwprintw( win, rows/2 -2, cols/2 - PAUSE_WIDTH/2,"========================================");
-    mvwprintw( win, rows/2 -1, cols/2 - PAUSE_WIDTH/2,"++You lost with a final score of %5d++", score);
-    mvwprintw( win, rows/2 -0, cols/2 - PAUSE_WIDTH/2,"+Press Ret to  play again, or q to quit+" );
-    mvwprintw( win, rows/2 +1, cols/2 - PAUSE_WIDTH/2,"+++++++++++High Score:  %5d+++++++++++", high_score);
-    mvwprintw( win, rows/2 +2, cols/2 - PAUSE_WIDTH/2,"========================================");
+    int cols = game_cols * COLS_PER_ROW;
+    mvwprintw( win, game_rows/2 -2, cols/2 - PAUSE_WIDTH/2,"========================================");
+    mvwprintw( win, game_rows/2 -1, cols/2 - PAUSE_WIDTH/2,"++You lost with a final score of %5d++", score);
+    mvwprintw( win, game_rows/2 -0, cols/2 - PAUSE_WIDTH/2,"+Press Ret to  play again, or q to quit+" );
+    mvwprintw( win, game_rows/2 +1, cols/2 - PAUSE_WIDTH/2,"+++++++++++High Score:  %5d+++++++++++", high_score);
+    mvwprintw( win, game_rows/2 +2, cols/2 - PAUSE_WIDTH/2,"========================================");
     wrefresh( win );
     while ( a != 0x0A && a != 0x0D && a != 'q' )
         a = getch();
@@ -428,34 +440,35 @@ int lose_screen( WINDOW* win, int score, int high_score, int rows, int cols)
     return a;
 }
 
-void victory( WINDOW* win, int rows, int cols, int game_rows, int game_cols )
+void victory( WINDOW* win, int game_rows, int game_cols )
 {
     wclear ( win );
     timeout( 3600000 );
-    mvwprintw( win, rows/2 -2, cols/2 - PAUSE_WIDTH/2,"========================================");
-    mvwprintw( win, rows/2 -1, cols/2 - PAUSE_WIDTH/2,"++++++++++++A WINNER  IS YOU++++++++++++");
-    mvwprintw( win, rows/2 -0, cols/2 - PAUSE_WIDTH/2,"+YOU FILLED THE ENTIRE  %3dx%2d field!+", game_cols/COLS_PER_ROW, game_rows );
-    mvwprintw( win, rows/2 +1, cols/2 - PAUSE_WIDTH/2,"++++++++PRESS ANY BUTTON TO EXIT++++++++");
-    mvwprintw( win, rows/2 +2, cols/2 - PAUSE_WIDTH/2,"========================================");
+    int cols = game_cols * COLS_PER_ROW;
+    mvwprintw( win, game_rows/2 -2, cols/2 - PAUSE_WIDTH/2,"========================================");
+    mvwprintw( win, game_rows/2 -1, cols/2 - PAUSE_WIDTH/2,"++++++++++++A WINNER  IS YOU++++++++++++");
+    mvwprintw( win, game_rows/2 -0, cols/2 - PAUSE_WIDTH/2,"++YOU FILLED THE ENTIRE  %3dx%2d field!++", game_cols, game_rows );
+    mvwprintw( win, game_rows/2 +1, cols/2 - PAUSE_WIDTH/2,"++++++++PRESS ANY BUTTON TO EXIT++++++++");
+    mvwprintw( win, game_rows/2 +2, cols/2 - PAUSE_WIDTH/2,"========================================");
     wrefresh( win );
     refresh();
     char a = getch();
 }
 
-void redraw_snake( WINDOW* win, std::vector<char> grid,  int game_rows, 
+void redraw_snake( WINDOW* win, const std::vector<char> &grid,  int game_rows,
                    int game_cols, int head_row, int head_col  )
 {
 
     wattron( win, COLOR_PAIR( BODY_PAIR ) );
 
-    for ( int i = 0; i < game_rows*game_cols/COLS_PER_ROW; i++ )
+    for ( int i = 0; i < game_rows*game_cols; i++ )
     {
         if ( grid[ i ] != 0 )
         {
             for ( int j = 0; j < COLS_PER_ROW; j++ )
             {
-                mvwaddch( win, i / ( game_cols/COLS_PER_ROW ), 
-                          i % ( game_cols/COLS_PER_ROW ) * COLS_PER_ROW + j, ' ' );
+                mvwaddch( win, i / ( game_cols ), 
+                          i % ( game_cols ) * COLS_PER_ROW + j, ' ' );
             }
         }
     }
