@@ -5,30 +5,31 @@
 #include <chrono>
 #include <ncurses.h>
 #include <random>
+#include <thread>
 #include <vector>
 
-#define STARTING_LEN    5
-#define LENGTH_PER_FOOD 1
+constexpr int STARTING_LEN    = 5;
+constexpr int LENGTH_PER_FOOD = 1;
 
-#define SCALING_FACT    2  //magnifies the game size, rows and cols, by this factor
-#define COLS_PER_ROW    2  //number of colums per row, to try to make squares
+constexpr int SCALING_FACT    = 2;  //magnifies the game size, rows and cols, by this factor
+constexpr int COLS_PER_ROW    = 2;  //number of colums per row, to try to make squares
 
-#define STARTING_ROW    3  //Row that the tail spawns on, def 3
-#define STARTING_COL    2  //Col that the tail spawns on, def 2
+constexpr int STARTING_ROW    = 3;  //Row that the tail spawns on, def 3
+constexpr int STARTING_COL    = 2;  //Col that the tail spawns on, def 2
 
-#define HEAD_PAIR       1 //number of the color pair for the head 
-#define BODY_PAIR       2 // .. body
-#define FOOD_PAIR       3 // .. Food
+constexpr int HEAD_PAIR       = 1; //number of the color pair for the head 
+constexpr int BODY_PAIR       = 2; // .. body
+constexpr int FOOD_PAIR       = 3; // .. Food
 
-#define TICK_LENGTH     135  //time in ms of each horiz frame
-#define VERT_RATIO      1.00 //Ratio of Vert/horiz ticks 
-                             //compensates that rows are longer than cols
+constexpr int TICK_LENGTH     = 125;   //time in ms of each horiz frame
+constexpr double VERT_RATIO   = 1.00; //Ratio of Vert/horiz ticks 
+                                      //compensates that rows are longer than cols
 
-#define STATS_HEIGHT    2
-#define STATS_WIDTH     59
+constexpr int STATS_HEIGHT    = 2;
+constexpr int STATS_WIDTH     = 59;
 
-#define PAUSE_HEIGHT    7
-#define PAUSE_WIDTH     40
+constexpr int PAUSE_HEIGHT    = 7;
+constexpr int PAUSE_WIDTH     = 40;
 
 void draw_border ( WINDOW*, int, int, int );
 void pause_menu  ( WINDOW*, int, int );
@@ -138,6 +139,7 @@ int main()
         int ch     = 0;
         int queue  = 0;
         int tail_col, tail_row, head_col, head_row, old_head_row, old_head_col;
+        long long int time_so_far;
 
         char dir     = '>';
         char old_dir = '>';
@@ -223,18 +225,18 @@ int main()
                 }
                 
                 tick_end = std::chrono::steady_clock::now();
+                
+                time_so_far = ( ( std::chrono::duration_cast<std::chrono::milliseconds> (tick_end - tick_start) ).count() );
 
                 if ( old_dir == '>' || old_dir == '<' )
-                {    
-                    tick_done = ( ( std::chrono::duration_cast<std::chrono::milliseconds>
-                        (tick_end - tick_start) ).count() ) > TICK_LENGTH ;
-                }
-                else
-                {
-                    tick_done = ( ( std::chrono::duration_cast<std::chrono::milliseconds>
-                        (tick_end - tick_start) ).count() ) > ( TICK_LENGTH * VERT_RATIO ) ;
+                    tick_done =  time_so_far > TICK_LENGTH ;
 
-                }
+                else
+                    tick_done = time_so_far > ( TICK_LENGTH * VERT_RATIO ) ;
+
+                //sleeps for up to 80% of the tick while the OS waits for a keyboard input
+                if ( tick_done == 0 && TICK_LENGTH - time_so_far  > .2 * TICK_LENGTH )
+                    std::this_thread::sleep_for(std::chrono::milliseconds( ( int ) ( .8*TICK_LENGTH - time_so_far ) ));
 
             }
 
