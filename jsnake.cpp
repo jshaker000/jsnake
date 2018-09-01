@@ -10,7 +10,7 @@
 #define STARTING_LEN    5
 #define LENGTH_PER_FOOD 1
 
-#define SCALING_FACT    1  //magnifies the game size, rows and cols, by this factor
+#define SCALING_FACT    2  //magnifies the game size, rows and cols, by this factor
 #define COLS_PER_ROW    2  //number of colums per row, to try to make squares
 
 #define STARTING_ROW    3  //Row that the tail spawns on, def 3
@@ -20,7 +20,7 @@
 #define BODY_PAIR       2 // .. body
 #define FOOD_PAIR       3 // .. Food
 
-#define TICK_LENGTH     105  //time in ms of each horiz frame
+#define TICK_LENGTH     135  //time in ms of each horiz frame
 #define VERT_RATIO      1.00 //Ratio of Vert/horiz ticks 
                              //compensates that rows are longer than cols
 
@@ -195,19 +195,19 @@ int main()
             
                 switch(ch) 
                 {
-                    case KEY_UP:
+                    case 'k': case 'w': case KEY_UP:
                         if ( old_dir != 'v' )
                             dir = '^';
                         break;
-                    case KEY_RIGHT:
+                    case 'l': case 'd': case KEY_RIGHT:
                         if ( old_dir != '<' )
                             dir = '>';
                         break;
-                    case KEY_DOWN:
+                    case 'j': case 's': case KEY_DOWN:
                         if ( old_dir != '^' )
                             dir = 'v';
                         break;
-                    case KEY_LEFT:
+                    case 'h': case 'a': case KEY_LEFT:
                         if ( old_dir != '>' )    
                             dir = '<';
                         break;

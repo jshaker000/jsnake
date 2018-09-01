@@ -5,6 +5,19 @@ A c++ implementation of snake using the ncures library
 
 ////////////////////////////////////////////////////////////
 
+Play:
+
+The goal of the game is to collect the food to lengthen your snake
+until your snake is big enough to fill the entire screen.
+
+Crashing into a wall or yourself kills you.
+
+You can move with the Arrows Keys, WASD, or Vim keys ( hjkl )
+
+'p' pauses the game, 'q' quits
+
+////////////////////////////////////////////////////////////
+
 Installation:
 
 This game requires the ncurses library to compile
@@ -41,7 +54,7 @@ Here are a few:
 SCALING_FACT defines the number of 'row/col' boxes that make up a logical square in the game
    This has the effect of 'magnifying' the game
    This may make the game easier to play, but the 'TICK_LENGTH' needs to be adjusted appropriately
-   so the snake doesnt look or feel like it is moving too fast [ 1 is the default ]
+   so the snake doesnt look or feel like it is moving too fast [  is the default ]
 
 'COLS_PER_ROW' is a constant to try to make col/rows square
    A value of 1 makes the grid 1 row per 1 col, a value of 2 makes the grid
@@ -62,7 +75,7 @@ The game calculates frames once every 'TICK_LENGTH' ms
    This can offer additional tweaking beyond COLS_PER_ROW
    Keep in mind appropriate VERT_RATIO changes with COLS_PER_ROW
 
-   TICK_LENGTH should be roughly from 60 - 150ms [ 105   is default ]
+   TICK_LENGTH should be roughly from 60 - 150ms [ 135   is default ]
    VERT_RATIO should be roughly from  1 - 1.5    [ 1.00  is default ]
 
 The colors of the Snake_Head, Body, and Food can be adjsuted on the lines
@@ -72,11 +85,15 @@ The colors of the Snake_Head, Body, and Food can be adjsuted on the lines
 
 Future Work:
 
-A greeting menu with options for size, ticks, etc, instead of making them defines
+-A greeting menu with options for size, ticks, etc, instead of making them defines
+ in the source code
 
-CLI options for a fixed size game, rather than scaling to terminal size
+-CLI options for a fixed size game, rather than scaling to terminal size
 
-Some file to store custom keybindings, local highscores, etc
+-Some file to store custom keybindings, local highscores, etc
+
+-Adding sleeps in places that dont hurt performance so the game uses less than 
+ 100% CPU
 
 /////////////////////////////////////////////////////////
 
