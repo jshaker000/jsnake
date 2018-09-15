@@ -40,17 +40,17 @@
 constexpr int STARTING_LEN    = 5;
 constexpr int LENGTH_PER_FOOD = 1;
 
-constexpr int SCALING_FACT    = 2;  //magnifies the game size, rows and cols, by this factor
-constexpr int COLS_PER_ROW    = 2;  //number of colums per row, to try to make squares
+constexpr int SCALING_FACT    = 2; //magnifies the game size, rows and cols, by this factor
+constexpr int COLS_PER_ROW    = 2; //number of colums per row, to try to make squares
 
-constexpr int STARTING_ROW    = 3;  //Row that the tail spawns on, def 3
-constexpr int STARTING_COL    = 2;  //Col that the tail spawns on, def 2
+constexpr int STARTING_ROW    = 3; //Row that the tail spawns on, def 3
+constexpr int STARTING_COL    = 2; //Col that the tail spawns on, def 2
 
 constexpr int HEAD_PAIR       = 1; //number of the color pair for the head 
 constexpr int BODY_PAIR       = 2; // .. body
 constexpr int FOOD_PAIR       = 3; // .. Food
 
-constexpr int TICK_LENGTH     = 125;   //time in ms of each horiz frame
+constexpr int TICK_LENGTH     = 125;  //time in ms of each horiz frame
 constexpr double VERT_RATIO   = 1.00; //Ratio of Vert/horiz ticks 
                                       //compensates that rows are longer than cols
 
@@ -59,6 +59,11 @@ constexpr int STATS_WIDTH     = 59;
 
 constexpr int PAUSE_HEIGHT    = 7;
 constexpr int PAUSE_WIDTH     = 40;
+                                      //options for texture
+constexpr unsigned char SH     = ' '; //Character for snake head
+constexpr unsigned char SB     = ' '; // .. .. snake body
+constexpr unsigned char FD     = ' '; // .. .. food
+
 
 void draw_border ( WINDOW*, int, int, int );
 void pause_menu  ( WINDOW*, int, int );
@@ -80,9 +85,9 @@ int main()
 
     //picks colors for the snake and food
     //NUMBER    TEXT_COLOR   HIGHLIGHT_COLOR
-    init_pair( HEAD_PAIR, COLOR_BLACK, COLOR_RED    );
-    init_pair( BODY_PAIR, COLOR_BLACK, COLOR_GREEN  );
-    init_pair( FOOD_PAIR, COLOR_BLACK, COLOR_YELLOW );
+    init_pair( HEAD_PAIR, COLOR_WHITE, COLOR_RED    );
+    init_pair( BODY_PAIR, COLOR_WHITE, COLOR_GREEN  );
+    init_pair( FOOD_PAIR, COLOR_WHITE, COLOR_YELLOW );
 
     int ROWS = 0 ;
     int COLS = 0 ;
@@ -153,8 +158,6 @@ int main()
 
     refresh();
 
-    pause_menu( game_win, game_rows, game_cols );
-
     while ( PLAY_AGAIN )
     {    
         for ( int i = 0; i < grid.size(); i++ )
@@ -197,7 +200,7 @@ int main()
             {
                 for ( int j = 0; j < SCALING_FACT; j++ )
                     for ( int k = 0; k < COLS_PER_ROW*SCALING_FACT; k++)
-                        mvwaddch( game_win, STARTING_ROW*SCALING_FACT+j, COLS_PER_ROW*SCALING_FACT*( STARTING_COL + i ) + k, ' ' );
+                        mvwaddch( game_win, STARTING_ROW*SCALING_FACT+j, COLS_PER_ROW*SCALING_FACT*( STARTING_COL + i ) + k, SB );
             }
             else
             {
@@ -205,7 +208,7 @@ int main()
                 wattron ( game_win, COLOR_PAIR(HEAD_PAIR));
                 for ( int j = 0; j < SCALING_FACT; j++ )
                     for ( int k = 0; k < COLS_PER_ROW*SCALING_FACT; k++)
-                        mvwaddch( game_win, STARTING_ROW*SCALING_FACT+j, COLS_PER_ROW*SCALING_FACT*( STARTING_COL + i ) + k, ' ' );
+                        mvwaddch( game_win, STARTING_ROW*SCALING_FACT+j, COLS_PER_ROW*SCALING_FACT*( STARTING_COL + i ) + k, SH );
 
                 wattroff( game_win, COLOR_PAIR( HEAD_PAIR ) );
             }
@@ -224,7 +227,7 @@ int main()
             {
                 ch = getch();
             
-                switch(ch) 
+                switch( ch )
                 {
                     case 'k': case 'w': case KEY_UP:
                         if ( old_dir != 'v' )
@@ -239,7 +242,7 @@ int main()
                             dir = 'v';
                         break;
                     case 'h': case 'a': case KEY_LEFT:
-                        if ( old_dir != '>' )    
+                        if ( old_dir != '>' )
                             dir = '<';
                         break;
                     case 'q':
@@ -263,9 +266,9 @@ int main()
                 else
                     tick_done = time_so_far > ( TICK_LENGTH * VERT_RATIO ) ;
 
-                //sleeps for up to 80% of the tick while the OS waits for a keyboard input
-                if ( tick_done == 0 && TICK_LENGTH - time_so_far  > .2 * TICK_LENGTH )
-                    std::this_thread::sleep_for(std::chrono::milliseconds( ( int ) ( .8*TICK_LENGTH - time_so_far ) ));
+                //sleeps for up to 95% of the tick while the OS waits for a keyboard input
+                if ( tick_done == 0 && TICK_LENGTH - time_so_far  > .05 * TICK_LENGTH )
+                    std::this_thread::sleep_for(std::chrono::milliseconds( ( int ) ( .95*TICK_LENGTH - time_so_far ) ));
 
             }
 
@@ -280,15 +283,16 @@ int main()
             //store the direction the snake is going so we can follow its new tail
             grid[ ( head_row * game_cols + head_col ) ] = dir; 
 
-            if     (dir == '^') head_row--;  // move up
-            else if(dir == '>') head_col++;  // move right
-            else if(dir == 'v') head_row++;  // move down
-            else if(dir == '<') head_col--;  // move left
-           
-            if( head_col == food_col && head_row == food_row) 
+            switch ( dir )
             {
+                case '^': head_row--; break; // move up
+                case '>': head_col++; break; // move right
+                case 'v': head_row++; break; // move down
+                case '<': head_col--; break; // move left
+            }
+
+            if( head_col == food_col && head_row == food_row) 
                 queue += LENGTH_PER_FOOD;
-            } 
 
             //if the snake has some growing to do, increment score and dont clear tail
             if ( queue >= 1 )
@@ -324,18 +328,10 @@ int main()
                 
                 switch ( temp  )
                 {
-                    case '>':
-                        tail_col+=1;
-                        break;
-                    case '<':
-                        tail_col-=1;
-                        break;
-                    case '^':
-                        tail_row-=1;
-                        break;
-                    case 'v':
-                        tail_row+=1;
-                        break;
+                    case '^': tail_row-=1; break;
+                    case '>': tail_col+=1; break;
+                    case 'v': tail_row+=1; break;
+                    case '<': tail_col-=1; break;
                 }
             }
 
@@ -346,21 +342,20 @@ int main()
             //check for self collision
             if ( grid[ (game_cols * head_row + head_col) ]!=0)
                 quit = 1;
-   
+
             //repaint old head with color of the body
             wattron( game_win, COLOR_PAIR( BODY_PAIR ) );
             for ( int i = 0; i < SCALING_FACT; i++)
                 for ( int j = 0; j < COLS_PER_ROW*SCALING_FACT; j++)
-                    mvwaddch( game_win, old_head_row*SCALING_FACT+i, COLS_PER_ROW*SCALING_FACT*old_head_col + j, ' ' );
+                    mvwaddch( game_win, old_head_row*SCALING_FACT+i, COLS_PER_ROW*SCALING_FACT*old_head_col + j, SB );
             wattroff( game_win, COLOR_PAIR( BODY_PAIR ) );
 
             //paint the new head head color
             wattron( game_win, COLOR_PAIR( HEAD_PAIR ) );
             for ( int i = 0; i < SCALING_FACT; i++)
                 for ( int j = 0; j < COLS_PER_ROW*SCALING_FACT; j++)
-                    mvwaddch( game_win, head_row*SCALING_FACT+i, COLS_PER_ROW*SCALING_FACT*head_col + j, ' ' );
+                    mvwaddch( game_win, head_row*SCALING_FACT+i, COLS_PER_ROW*SCALING_FACT*head_col + j, SH );
             wattroff( game_win, COLOR_PAIR( BODY_PAIR ) );
-
 
             //generate new food if need be ( if it was eaten or if it is randomly generated on the snake )
             while ( grid[ food_row * game_cols + food_col ] != 0 
@@ -369,20 +364,20 @@ int main()
                 food_col = rand() % game_cols;
                 food_row = rand() % game_rows;
             }
-           
+
             //print food 
             wattron( game_win, COLOR_PAIR( FOOD_PAIR ) );
             for ( int i = 0; i < SCALING_FACT; i++)
                 for ( int j = 0; j < COLS_PER_ROW*SCALING_FACT; j++)
-                    mvwaddch( game_win, food_row*SCALING_FACT+i, COLS_PER_ROW*SCALING_FACT*food_col + j, ' ' );
+                    mvwaddch( game_win, food_row*SCALING_FACT+i, COLS_PER_ROW*SCALING_FACT*food_col + j, FD );
             wattroff( game_win, COLOR_PAIR( BODY_PAIR ) );
 
             wrefresh( game_win );
-            
+
         }
-        
+
         ch = lose_screen( game_win, score, HIGH_SCORE, game_rows, game_cols );
-        
+
         if ( ch == 'q' )
             PLAY_AGAIN = 0;
 
@@ -509,7 +504,7 @@ void redraw_snake( WINDOW* win, const std::vector<char> &grid,  int game_rows,
         {
             for ( int j = 0; j < SCALING_FACT; j++ )
                 for ( int k = 0; k < COLS_PER_ROW*SCALING_FACT; k++)
-                    mvwaddch( win, i / ( game_cols ) * SCALING_FACT + j, i % ( game_cols ) * COLS_PER_ROW*SCALING_FACT + k, ' ' );
+                    mvwaddch( win, i / ( game_cols ) * SCALING_FACT + j, i % ( game_cols ) * COLS_PER_ROW*SCALING_FACT + k, SB );
         }
     }
 
@@ -518,7 +513,7 @@ void redraw_snake( WINDOW* win, const std::vector<char> &grid,  int game_rows,
     wattron( win, COLOR_PAIR( HEAD_PAIR ) );
     for ( int i = 0; i < SCALING_FACT; i++ )
         for ( int j = 0; j < COLS_PER_ROW*SCALING_FACT; j++)
-            mvwaddch( win, head_row * SCALING_FACT + i, head_col * COLS_PER_ROW*SCALING_FACT + j, ' ' );
+            mvwaddch( win, head_row * SCALING_FACT + i, head_col * COLS_PER_ROW*SCALING_FACT + j, SH );
     wattroff(win, COLOR_PAIR( HEAD_PAIR ) );
 
 }
