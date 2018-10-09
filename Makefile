@@ -5,7 +5,7 @@ LDFLAGS=-lncurses
 jsnake: jsnake.cpp
 	$(CXX)  jsnake.cpp $(CXXFLAGS) $(LDFLAGS) -o jsnake
 
-install: 
+install: jsnake 
 	cp jsnake /usr/local/bin/jsnake
 
 clean:
