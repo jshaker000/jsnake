@@ -89,6 +89,11 @@ int main()
     init_pair( BODY_PAIR, COLOR_WHITE, COLOR_GREEN  );
     init_pair( FOOD_PAIR, COLOR_WHITE, COLOR_YELLOW );
 
+    //Settings to pipe through a software like lolcat for prettyness
+    //init_pair( HEAD_PAIR, COLOR_WHITE, COLOR_BLACK);
+    //init_pair( BODY_PAIR, COLOR_WHITE, COLOR_BLACK);
+    //init_pair( FOOD_PAIR, COLOR_WHITE, COLOR_BLACK);
+    
     int ROWS = 0 ;
     int COLS = 0 ;
     int  HIGH_SCORE = 0;
@@ -179,7 +184,7 @@ int main()
         bool quit  = 0;
         bool tick_done = 0;
 
-        update_stats( stats_win, score, HIGH_SCORE, game_rows, game_cols);
+        update_stats(stats_win, score, HIGH_SCORE, game_rows, game_cols);
 
         //initialize head and tail location of start snake
         //Then initialize gird with the direction the snake was going at each point
