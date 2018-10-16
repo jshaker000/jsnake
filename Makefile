@@ -3,7 +3,7 @@ CXXFLAGS=-std=c++11 -O2
 LDFLAGS=-lncurses
 
 jsnake: jsnake.cpp
-	$(CXX)  jsnake.cpp $(CXXFLAGS) $(LDFLAGS) -o jsnake
+	$(CXX) -o $@ $^ $(CXXFLAGS) $(LDFLAGS)
 
 install: jsnake 
 	cp jsnake /usr/local/bin/jsnake
