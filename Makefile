@@ -1,15 +1,20 @@
+INSTALLDIR=/usr/local/bin
+
 CXX=g++
 CXXFLAGS=-std=c++11 -O2
 LDFLAGS=-lncurses
 
-jsnake: jsnake.cpp
+MAIN=jsnake
+
+
+$(MAIN): $(MAIN).cpp
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(LDFLAGS)
 
-install: jsnake 
-	cp jsnake /usr/local/bin/jsnake
+install: $(MAIN)
+	cp $(MAIN) $(INSTALLDIR)/$(MAIN)
 
 clean:
-	rm -f jsnake *.o
+	rm -f $(MAIN) *.o
 
 uninstall:
-	rm -f /usr/local/bin/jsnake
+	rm -f $(INSTALLDIR)/$(MAIN)
