@@ -6,11 +6,11 @@ LDFLAGS=-lncurses
 
 MAIN=jsnake
 
+.PHONY: all install clean uninstall
 
-$(MAIN): $(MAIN).cpp
-	$(CXX) -o $@ $^ $(CXXFLAGS) $(LDFLAGS)
+all: $(MAIN)
 
-install: $(MAIN)
+install: all 
 	cp $(MAIN) $(INSTALLDIR)/$(MAIN)
 
 clean:
@@ -18,3 +18,6 @@ clean:
 
 uninstall:
 	rm -f $(INSTALLDIR)/$(MAIN)
+
+$(MAIN): $(MAIN).cpp
+	$(CXX) -o $@ $^ $(CXXFLAGS) $(LDFLAGS)
