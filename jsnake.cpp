@@ -10,32 +10,32 @@
 #include <thread>
 #include <vector>
 
-constexpr int STARTING_LEN    = 5;
-constexpr int LENGTH_PER_FOOD = 1;
+static constexpr int STARTING_LEN    = 5;
+static constexpr int LENGTH_PER_FOOD = 1;
 
-constexpr int SCALING_FACT    = 2; //magnifies the game size, rows and cols, by this factor
-constexpr int COLS_PER_ROW    = 2; //number of colums per row, to try to make squares
+static constexpr int SCALING_FACT    = 2; //magnifies the game size, rows and cols, by this factor
+static constexpr int COLS_PER_ROW    = 2; //number of colums per row, to try to make squares
 
-constexpr int STARTING_ROW    = 3; //Row that the tail spawns on, def 3
-constexpr int STARTING_COL    = 2; //Col that the tail spawns on, def 2
+static constexpr int STARTING_ROW    = 3; //Row that the tail spawns on, def 3
+static constexpr int STARTING_COL    = 2; //Col that the tail spawns on, def 2
 
-constexpr int HEAD_PAIR       = 1; //number of the color pair for the head 
-constexpr int BODY_PAIR       = 2; // .. body
-constexpr int FOOD_PAIR       = 3; // .. Food
+static constexpr int HEAD_PAIR       = 1; //number of the color pair for the head 
+static constexpr int BODY_PAIR       = 2; // .. body
+static constexpr int FOOD_PAIR       = 3; // .. Food
 
-constexpr int TICK_LENGTH     = 125;  //time in ms of each horiz frame
-constexpr double VERT_RATIO   = 1.00; //Ratio of Vert/horiz ticks 
+static constexpr int TICK_LENGTH     = 125;  //time in ms of each horiz frame
+static constexpr double VERT_RATIO   = 1.00; //Ratio of Vert/horiz ticks 
                                       //compensates that rows are longer than cols
 
-constexpr int STATS_HEIGHT    = 2;
-constexpr int STATS_WIDTH     = 59;
+static constexpr int STATS_HEIGHT    = 2;
+static constexpr int STATS_WIDTH     = 59;
 
-constexpr int PAUSE_HEIGHT    = 7;
-constexpr int PAUSE_WIDTH     = 40;
+static constexpr int PAUSE_HEIGHT    = 7;
+static constexpr int PAUSE_WIDTH     = 40;
                                       //options for texture
-constexpr unsigned char SH     = ' '; //Character for snake head
-constexpr unsigned char SB     = ' '; // .. .. snake body
-constexpr unsigned char FD     = ' '; // .. .. food
+static constexpr unsigned char SH     = ' '; //Character for snake head
+static constexpr unsigned char SB     = ' '; // .. .. snake body
+static constexpr unsigned char FD     = ' '; // .. .. food
 
 
 void draw_border ( WINDOW*, int, int, int );
@@ -53,7 +53,8 @@ int main()
     curs_set( 0 );
     noecho();
     keypad(stdscr, TRUE);
-    
+    nodelay(stdscr, TRUE);
+
     start_color();
 
     //picks colors for the snake and food
@@ -69,6 +70,7 @@ int main()
     init_pair( FOOD_PAIR, COLOR_WHITE, COLOR_BLACK);
     */
 
+    //determine game size from terminal size
     int ROWS = 0 ;
     int COLS = 0 ;
     int  HIGH_SCORE = 0;
@@ -129,22 +131,19 @@ int main()
 
     grid.resize( game_rows * game_cols );
 
+    //main win is whole screen, game window is just the play field, stats window is just the stats
     WINDOW* main_win = newwin( rows, cols, 0, 0 );
     WINDOW* stats_win= newwin( STATS_HEIGHT, cols - 2  , 1, 1 );
     WINDOW* game_win = newwin( game_rows * SCALING_FACT, game_cols * COLS_PER_ROW * SCALING_FACT, 2 + STATS_HEIGHT, 1  );
 
     draw_border ( main_win, rows, cols, STATS_HEIGHT );
-    update_stats( stats_win, 0, HIGH_SCORE, game_rows, game_cols );
-
-    refresh();
+    pause_menu  ( game_win, game_rows, game_cols );
 
     while ( PLAY_AGAIN )
     {    
         for ( int i = 0; i < grid.size(); i++ )
             grid[ i ] = 0;
 
-        nodelay(stdscr, TRUE);
-        
         int food_col = rand() % game_cols;
         int food_row = rand() % game_rows;
         int score  = 0;
@@ -172,28 +171,13 @@ int main()
         old_head_col = ( STARTING_COL + STARTING_LEN - 2 );
         old_head_row = STARTING_ROW;
 
-        wattron( game_win, COLOR_PAIR( BODY_PAIR ) );
+        //draw initial snake
         for( int i = 0; i < STARTING_LEN; i++ )
         {
             grid[ ( STARTING_ROW * game_cols + ( STARTING_COL + i ) ) ] = '>';
-            if ( i!=STARTING_LEN-1 )
-            {
-                for ( int j = 0; j < SCALING_FACT; j++ )
-                    for ( int k = 0; k < COLS_PER_ROW*SCALING_FACT; k++)
-                        mvwaddch( game_win, STARTING_ROW*SCALING_FACT+j, COLS_PER_ROW*SCALING_FACT*( STARTING_COL + i ) + k, SB );
-            }
-            else
-            {
-                wattroff( game_win, COLOR_PAIR( BODY_PAIR ) );
-                wattron ( game_win, COLOR_PAIR(HEAD_PAIR));
-                for ( int j = 0; j < SCALING_FACT; j++ )
-                    for ( int k = 0; k < COLS_PER_ROW*SCALING_FACT; k++)
-                        mvwaddch( game_win, STARTING_ROW*SCALING_FACT+j, COLS_PER_ROW*SCALING_FACT*( STARTING_COL + i ) + k, SH );
-
-                wattroff( game_win, COLOR_PAIR( HEAD_PAIR ) );
-            }
         }
-        
+        redraw_snake( game_win, grid,game_rows, game_cols, head_row, head_col );
+
         wrefresh( game_win );
 
         std::chrono::steady_clock::time_point tick_start = std::chrono::steady_clock::now(); 
@@ -237,7 +221,6 @@ int main()
                         pause_menu  ( game_win, game_rows, game_cols );
                         redraw_snake( game_win, grid,game_rows, game_cols, head_row, head_col );
                         tick_start = tick_end = std::chrono::steady_clock::now();
-                        nodelay(stdscr, TRUE);
                         break;
                 }
                 
@@ -325,7 +308,7 @@ int main()
                 quit = 1;
             
             //check for self collision
-            if ( grid[ (game_cols * head_row + head_col) ]!=0)
+            if ( grid[ (game_cols * head_row + head_col) ] != 0 )
                 quit = 1;
 
             //repaint old head with color of the body
@@ -415,7 +398,7 @@ void draw_border( WINDOW* win, int rows, int cols, int stats_size )
 
 void pause_menu( WINDOW* win, int game_rows, int game_cols )
 {     
-    timeout( 3600000 );
+    nodelay(stdscr, FALSE);
     int cols = game_cols * COLS_PER_ROW * SCALING_FACT;
     int rows = game_rows * SCALING_FACT;
     mvwprintw( win, rows/2 -3, cols/2 - PAUSE_WIDTH/2,"========================================");
@@ -426,10 +409,12 @@ void pause_menu( WINDOW* win, int game_rows, int game_cols )
     mvwprintw( win, rows/2 +2, cols/2 - PAUSE_WIDTH/2,"++++++++Press  any Key to Resume++++++++");
     mvwprintw( win, rows/2 +3, cols/2 - PAUSE_WIDTH/2,"========================================");
     wrefresh( win );
+    refresh();
     char a = getch();
+    nodelay(stdscr, TRUE);
     wclear( win );
-}   
-    
+}
+
 void update_stats( WINDOW* win, int score, int high_score, int game_rows, int game_cols )
 {
     for ( int i = 0;i < STATS_HEIGHT; i++ )
@@ -445,6 +430,7 @@ void update_stats( WINDOW* win, int score, int high_score, int game_rows, int ga
 
 int lose_screen( WINDOW* win, int score, int high_score, int game_rows, int game_cols)
 {
+    nodelay(stdscr, FALSE);
     int a = 0;
     int cols = game_cols * COLS_PER_ROW * SCALING_FACT;
     int rows = game_rows * SCALING_FACT;
@@ -454,17 +440,18 @@ int lose_screen( WINDOW* win, int score, int high_score, int game_rows, int game
     mvwprintw( win, rows/2 +1, cols/2 - PAUSE_WIDTH/2,"+++++++++++High Score:  %5d+++++++++++", high_score);
     mvwprintw( win, rows/2 +2, cols/2 - PAUSE_WIDTH/2,"========================================");
     wrefresh( win );
-    while ( a != 0x0A && a != 0x0D && a != 'q' )
+    while ( a != '\n' && a != '\r' && a != 'q' )
         a = getch();
     wclear ( win );
     wrefresh( win );
+    nodelay(stdscr, TRUE);
     return a;
 }
 
 void victory( WINDOW* win, int game_rows, int game_cols )
 {
     wclear ( win );
-    timeout( 3600000 );
+    nodelay(stdscr, FALSE);
     int cols = game_cols * COLS_PER_ROW * SCALING_FACT;
     int rows = game_rows * SCALING_FACT;
     mvwprintw( win, rows/2 -2, cols/2 - PAUSE_WIDTH/2,"========================================");
@@ -475,12 +462,12 @@ void victory( WINDOW* win, int game_rows, int game_cols )
     wrefresh( win );
     refresh();
     char a = getch();
+    nodelay(stdscr, TRUE);
 }
 
 void redraw_snake( WINDOW* win, const std::vector<char> &grid,  int game_rows,
                    int game_cols, int head_row, int head_col  )
 {
-
     wattron( win, COLOR_PAIR( BODY_PAIR ) );
 
     for ( int i = 0; i < game_rows*game_cols; i++ )
@@ -500,5 +487,4 @@ void redraw_snake( WINDOW* win, const std::vector<char> &grid,  int game_rows,
         for ( int j = 0; j < COLS_PER_ROW*SCALING_FACT; j++)
             mvwaddch( win, head_row * SCALING_FACT + i, head_col * COLS_PER_ROW*SCALING_FACT + j, SH );
     wattroff(win, COLOR_PAIR( HEAD_PAIR ) );
-
 }
