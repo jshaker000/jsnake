@@ -346,7 +346,7 @@ int main()
 
         ch = lose_screen( game_win, score, HIGH_SCORE, game_rows, game_cols );
 
-        if ( ch == 'q' )
+        if ( ch == 'q' || ch == 'Q' )
             PLAY_AGAIN = 0;
 
     }
