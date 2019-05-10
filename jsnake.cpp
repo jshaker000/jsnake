@@ -440,7 +440,7 @@ int lose_screen( WINDOW* win, int score, int high_score, int game_rows, int game
     mvwprintw( win, rows/2 +1, cols/2 - PAUSE_WIDTH/2,"+++++++++++High Score:  %5d+++++++++++", high_score);
     mvwprintw( win, rows/2 +2, cols/2 - PAUSE_WIDTH/2,"========================================");
     wrefresh( win );
-    while ( a != '\n' && a != '\r' && a != 'q' )
+    while ( a != '\n' && a != '\r' && a != 'q' && a != 'Q' )
         a = getch();
     wclear ( win );
     wrefresh( win );
