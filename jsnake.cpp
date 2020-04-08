@@ -409,7 +409,7 @@ static void pause_menu( WINDOW* win, int game_rows, int game_cols )
     mvwprintw( win, rows/2 +3, cols/2 - PAUSE_WIDTH/2,"========================================");
     wrefresh( win );
     refresh();
-    char a = getch();
+    getch();
     nodelay(stdscr, TRUE);
     wclear( win );
 }
@@ -460,7 +460,7 @@ static void victory( WINDOW* win, int game_rows, int game_cols )
     mvwprintw( win, rows/2 +2, cols/2 - PAUSE_WIDTH/2,"========================================");
     wrefresh( win );
     refresh();
-    char a = getch();
+    getch();
     nodelay(stdscr, TRUE);
 }
 

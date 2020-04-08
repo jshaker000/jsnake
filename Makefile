@@ -1,23 +1,26 @@
 INSTALLDIR=/usr/local/bin
 
-CXX=g++
-CXXFLAGS=-std=c++11 -O2
-LDFLAGS=-lncurses
+CXX     :=g++
+CXXFLAGS:=-std=c++11 -Wall -Werror -O3
+LDFLAGS :=-lncurses
 
-MAIN=jsnake
+MAIN:=jsnake
 
-.PHONY: all install clean uninstall
+.PHONY: run all install clean uninstall
 
-all: $(MAIN)
+run: all
+	./${MAIN}
+
+all: ${MAIN}
 
 install: all 
-	cp $(MAIN) $(INSTALLDIR)/$(MAIN)
+	cp ${MAIN} ${INSTALLDIR}/${MAIN}
 
 clean:
-	rm -f $(MAIN) *.o
+	rm -f ${MAIN} *.o
 
 uninstall:
-	rm -f $(INSTALLDIR)/$(MAIN)
+	rm -f ${INSTALLDIR}/${MAIN}
 
-$(MAIN): $(MAIN).cpp
-	$(CXX) -o $@ $^ $(CXXFLAGS) $(LDFLAGS)
+${MAIN}: % : ${MAIN}.cpp
+	${CXX} -o $@ $^ ${CXXFLAGS} ${LDFLAGS}
