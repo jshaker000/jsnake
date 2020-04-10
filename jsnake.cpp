@@ -141,8 +141,8 @@ int main()
 
     while ( PLAY_AGAIN )
     {
-        for ( int i = 0; i < grid.size(); i++ )
-            grid[ i ] = 0;
+        for (auto &g: grid)
+            g = 0;
 
         int food_col = rand() % game_cols;
         int food_row = rand() % game_rows;
