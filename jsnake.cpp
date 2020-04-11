@@ -158,16 +158,21 @@ int main()
         int food_row;
 
         int score  = 0;
-        int ch     = 0;
-        int queue  = 0;
-        int tail_col, tail_row, head_col, head_row, old_head_row, old_head_col;
+        int ch;
+        int len_q  = 0;
+        int tail_col;
+        int tail_row;
+        int head_col;
+        int head_row;
+        int old_head_row;
+        int old_head_col;
         long long int time_so_far;
 
         Direction dir     = Direction::right;
         Direction old_dir = Direction::right;
 
-        bool quit      = 0;
-        bool tick_done = 0;
+        bool quit      = false;
+        bool tick_done = false;
 
         update_stats(stats_win, score, HIGH_SCORE, game_rows, game_cols);
 
@@ -261,9 +266,8 @@ int main()
             old_head_col = head_col;
             old_head_row = head_row;
 
-            //store the direction the snake is going so we can follow its new tail
+            //store the direction the snake is going so we can follow its new tail when it eventually gets there
             grid[(head_row * game_cols + head_col)] = dir;
-
             switch (dir)
             {
                 case Direction::up:    head_row--; break;
@@ -273,9 +277,10 @@ int main()
                 default: break;
             }
 
+            // eat food
             if(head_col == food_col && head_row == food_row)
             {
-                queue += LENGTH_PER_FOOD;
+                len_q += LENGTH_PER_FOOD;
                 do {
                     food_col = dst_col(rng);
                     food_row = dst_row(rng);
@@ -284,9 +289,9 @@ int main()
             }
 
             //if the snake has some growing to do, increment score and dont clear tail
-            if (queue >= 1)
+            if (len_q >= 1)
             {
-                queue--;
+                len_q--;
                 score++;
                 if (score > HIGH_SCORE)
                     HIGH_SCORE = score;
@@ -340,13 +345,13 @@ int main()
             wattroff(game_win, COLOR_PAIR(BODY_PAIR));
 
             // paint the new head head color
-            wattron( game_win, COLOR_PAIR( HEAD_PAIR ) );
+            wattron( game_win, COLOR_PAIR(HEAD_PAIR));
             for (int i = 0; i < SCALING_FACT; i++)
                 for (int j = 0; j < COLS_PER_ROW*SCALING_FACT; j++)
                     mvwaddch(game_win, head_row*SCALING_FACT+i, COLS_PER_ROW*SCALING_FACT*head_col + j, SH);
             wattroff(game_win, COLOR_PAIR(BODY_PAIR));
 
-            //print food
+            // print food
             wattron(game_win, COLOR_PAIR(FOOD_PAIR));
             for (int i = 0; i < SCALING_FACT; i++)
                 for (int j = 0; j < COLS_PER_ROW*SCALING_FACT; j++)
@@ -354,10 +359,9 @@ int main()
             wattroff(game_win, COLOR_PAIR(BODY_PAIR));
 
             wrefresh(game_win);
-
         }
 
-        ch = lose_screen (game_win, score, HIGH_SCORE, game_rows, game_cols);
+        ch = lose_screen(game_win, score, HIGH_SCORE, game_rows, game_cols);
 
         if (ch == 'q' || ch == 'Q')
             PLAY_AGAIN = 0;
