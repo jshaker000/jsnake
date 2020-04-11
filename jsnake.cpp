@@ -210,6 +210,7 @@ int main()
         {
             // get user input until tick is over
             // do not allow user to go right if going left etc to kill themselves
+            // support VIM, Arrows, WASD
             while(!tick_done)
             {
                 ch = tolower(getch());
