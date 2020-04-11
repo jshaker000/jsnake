@@ -5,6 +5,7 @@
 ** It is named after me, but now it humourously looks like it was written in java
 */
 
+#include <cctype>
 #include <cstdio>
 #include <chrono>
 #include <random>
@@ -206,12 +207,8 @@ int main()
             // do not allow user to go right if going left etc to kill themselves
             while(!tick_done)
             {
-                ch = getch();
+                ch = tolower(getch());
 
-                if (ch >= 'A' && ch <= 'Z')
-                {
-                    ch = ch + ('a' - 'A');
-                }
                 switch(ch)
                 {
                     case 'k': case 'w': case KEY_UP:
