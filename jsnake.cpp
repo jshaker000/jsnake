@@ -20,8 +20,8 @@ enum class Direction: char { up, down, left, right, empt };
 static constexpr int STARTING_LEN    = 5;
 static constexpr int LENGTH_PER_FOOD = 1;
 
-static constexpr int SCALING_FACT    = 2; //magnifies the game size, rows and cols, by this factor
-static constexpr int COLS_PER_ROW    = 2; //number of colums per row, to try to make squares
+static constexpr int SCALING_FACT    = 2; // magnifies the game size, rows and cols, by this factor
+static constexpr int COLS_PER_ROW    = 2; // number of colums per row, to try to make squares
 
 static constexpr int STARTING_ROW    = 3; //Row that the tail spawns on, def 3
 static constexpr int STARTING_COL    = 2; //Col that the tail spawns on, def 2
@@ -128,6 +128,7 @@ int main()
     //'logical' size of the game screen
     const int game_rows = (rows - STATS_HEIGHT - 3) / SCALING_FACT;
     const int game_cols = (cols - 2) / (COLS_PER_ROW * SCALING_FACT);
+    const int total_squares = game_rows * game_cols;
 
     std::random_device dev;
     std::mt19937 rng(dev());
@@ -282,15 +283,18 @@ int main()
             if(head_col == food_col && head_row == food_row)
             {
                 len_q += LENGTH_PER_FOOD;
-                do {
-                    food_col = dst_col(rng);
-                    food_row = dst_row(rng);
-                } while ((grid[food_row * game_cols + food_col] != Direction::empt)
-                         || (food_col == head_col && food_row == head_row));
+                if (score + STARTING_LEN + 1 != total_squares)
+                {
+                  do {
+                      food_col = dst_col(rng);
+                      food_row = dst_row(rng);
+                  } while ((grid[food_row * game_cols + food_col] != Direction::empt)
+                           || (food_col == head_col && food_row == head_row));
+                }
             }
 
             //if the snake has some growing to do, increment score and dont clear tail
-            if (len_q >= 1)
+            if (len_q > 0)
             {
                 len_q--;
                 score++;
@@ -299,7 +303,7 @@ int main()
 
                 update_stats(stats_win, score, HIGH_SCORE, game_rows, game_cols);
 
-                if (score + STARTING_LEN == (game_rows * game_cols))
+                if (score + STARTING_LEN == total_squares)
                 {
                     victory(game_win, game_rows, game_cols);
                     endwin();
