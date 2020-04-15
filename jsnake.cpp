@@ -5,6 +5,7 @@
 ** It is named after me, but now it humourously looks like it was written in java
 */
 
+#include <algorithm>
 #include <cctype>
 #include <cstdio>
 #include <chrono>
@@ -140,7 +141,7 @@ int main()
                                      // lists all the places the snake is and what direction it was moving
                                      // for O(1) collision lookup and to 'follow' the tail every tick
 
-    grid.resize(game_rows * game_cols);
+    grid.resize(total_squares, Direction::empt);
 
     //main win is whole screen, game window is just the play field, stats window is just the stats
     WINDOW* main_win = newwin(rows, cols, 0, 0);
@@ -152,8 +153,7 @@ int main()
 
     while (PLAY_AGAIN)
     {
-        for (auto &g: grid)
-            g = Direction::empt;
+        std::fill(grid.begin(), grid.end(), Direction::empt);
 
         int food_col;
         int food_row;
@@ -170,7 +170,7 @@ int main()
         long long int time_so_far;
 
         Direction dir     = Direction::right;
-        Direction old_dir = Direction::right;
+        Direction old_dir = dir;
 
         bool quit      = false;
         bool tick_done = false;
@@ -285,11 +285,11 @@ int main()
                 len_q += LENGTH_PER_FOOD;
                 if (score + STARTING_LEN + 1 != total_squares)
                 {
-                  do {
-                      food_col = dst_col(rng);
-                      food_row = dst_row(rng);
-                  } while ((grid[food_row * game_cols + food_col] != Direction::empt)
-                           || (food_col == head_col && food_row == head_row));
+                    do {
+                        food_col = dst_col(rng);
+                        food_row = dst_row(rng);
+                    } while ((grid[food_row * game_cols + food_col] != Direction::empt)
+                             || (food_col == head_col && food_row == head_row));
                 }
             }
 
