@@ -235,7 +235,7 @@ int main()
                             dir = Direction::left;
                         break;
                     case 'q':
-                        quit = 1;
+                        quit = true;
                         break;
                     case 'p':
                         pause_menu  (game_win, game_rows, game_cols);
@@ -335,12 +335,12 @@ int main()
             }
 
             // check for wall collision
-            if(head_row > (game_rows - 1) || head_col > (game_cols - 1) || head_row < 0 || head_col < 0)
-                quit = 1;
+            if(!quit && (head_row > (game_rows - 1) || head_col > (game_cols - 1) || head_row < 0 || head_col < 0))
+                quit = true;
 
             // check for self collision
-            if (grid[(game_cols * head_row + head_col)] != Direction::empt)
-                quit = 1;
+            if (!quit && (grid[(game_cols * head_row + head_col)] != Direction::empt))
+                quit = true;
 
             // repaint old head with color of the body
             wattron(game_win, COLOR_PAIR(BODY_PAIR));
@@ -350,7 +350,7 @@ int main()
             wattroff(game_win, COLOR_PAIR(BODY_PAIR));
 
             // paint the new head head color
-            wattron( game_win, COLOR_PAIR(HEAD_PAIR));
+            wattron(game_win, COLOR_PAIR(HEAD_PAIR));
             for (int i = 0; i < SCALING_FACT; i++)
                 for (int j = 0; j < COLS_PER_ROW*SCALING_FACT; j++)
                     mvwaddch(game_win, head_row*SCALING_FACT+i, COLS_PER_ROW*SCALING_FACT*head_col + j, SH);
