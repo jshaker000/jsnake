@@ -475,7 +475,7 @@ static void victory(WINDOW* win, int game_rows, int game_cols)
     int rows = game_rows * SCALING_FACT;
     mvwprintw(win, rows/2 -2, cols/2 - PAUSE_WIDTH/2,"========================================");
     mvwprintw(win, rows/2 -1, cols/2 - PAUSE_WIDTH/2,"++++++++++++A WINNER  IS YOU++++++++++++");
-    mvwprintw(win, rows/2 -0, cols/2 - PAUSE_WIDTH/2,"++YOU FILLED THE ENTIRE  %3dx%2d field!++", game_cols, game_rows );
+    mvwprintw(win, rows/2 -0, cols/2 - PAUSE_WIDTH/2,"++YOU FILLED THE ENTIRE  %3dx%2d FIELD!++", game_cols, game_rows );
     mvwprintw(win, rows/2 +1, cols/2 - PAUSE_WIDTH/2,"++++++++PRESS ANY BUTTON TO EXIT++++++++");
     mvwprintw(win, rows/2 +2, cols/2 - PAUSE_WIDTH/2,"========================================");
     wrefresh(win);
