@@ -45,12 +45,13 @@ static constexpr unsigned char SH    = ' '; // Character for snake head
 static constexpr unsigned char SB    = ' '; // .. .. snake body
 static constexpr unsigned char FD    = ' '; // .. .. food
 
-static void draw_border (WINDOW*, int, int, int);
-static void pause_menu  (WINDOW*, int, int);
-static void update_stats(WINDOW*, int, int, int, int);
-static int  lose_screen (WINDOW*, int, int, int, int);
-static void victory     (WINDOW*, int, int);
-static void redraw_snake(WINDOW*, const std::vector<Direction> &, int , int ,int , int);
+static void draw_square (WINDOW*, const int, const int, const int, const char);
+static void draw_border (WINDOW*, const int, const int, const int);
+static void pause_menu  (WINDOW*, const int, const int);
+static void update_stats(WINDOW*, const int, const int, const int, const int);
+static int  lose_screen (WINDOW*, const int, const int, const int, const int);
+static void victory     (WINDOW*, const int, const int);
+static void redraw_snake(WINDOW*, const std::vector<Direction> &, const int , const int ,const int , const int);
 
 int main()
 {
@@ -189,10 +190,9 @@ int main()
         old_head_row = STARTING_ROW;
 
         // draw initial snake
-        for(int i = 0; i < STARTING_LEN; i++)
-        {
-            grid[(STARTING_ROW*game_cols + (STARTING_COL+i))] = Direction::right;
-        }
+        std::for_each(grid.begin()+STARTING_ROW*game_cols+STARTING_COL,
+                      grid.begin()+STARTING_ROW*game_cols+STARTING_COL+STARTING_LEN,
+                      [](auto &g) { g = Direction::right; });
 
         do {
             food_col = dst_col(rng);
@@ -314,13 +314,7 @@ int main()
             // and update the tail location based on the direction the snake was going (stored in grid vector)
             else
             {
-                wattron(game_win, COLOR_PAIR(0));
-
-                for (int i = 0; i < SCALING_FACT; i++)
-                    for (int j = 0; j < COLS_PER_ROW*SCALING_FACT; j++)
-                        mvwaddch(game_win, tail_row*SCALING_FACT+i, COLS_PER_ROW*SCALING_FACT*tail_col + j, ' ');
-
-                wattroff(game_win, COLOR_PAIR(0));
+                draw_square(game_win, 0, tail_row, tail_col, ' ');
 
                 Direction tmp = grid[(tail_row * game_cols + tail_col)];
                 grid[(tail_row * game_cols + tail_col)] = Direction::empt;
@@ -343,25 +337,13 @@ int main()
                 quit = true;
 
             // repaint old head with color of the body
-            wattron(game_win, COLOR_PAIR(BODY_PAIR));
-            for (int i = 0; i < SCALING_FACT; i++)
-                for (int j = 0; j < COLS_PER_ROW*SCALING_FACT; j++)
-                    mvwaddch(game_win, old_head_row*SCALING_FACT+i, COLS_PER_ROW*SCALING_FACT*old_head_col + j, SB);
-            wattroff(game_win, COLOR_PAIR(BODY_PAIR));
+            draw_square(game_win, BODY_PAIR, old_head_row, old_head_col, SB);
 
             // paint the new head head color
-            wattron(game_win, COLOR_PAIR(HEAD_PAIR));
-            for (int i = 0; i < SCALING_FACT; i++)
-                for (int j = 0; j < COLS_PER_ROW*SCALING_FACT; j++)
-                    mvwaddch(game_win, head_row*SCALING_FACT+i, COLS_PER_ROW*SCALING_FACT*head_col + j, SH);
-            wattroff(game_win, COLOR_PAIR(BODY_PAIR));
+            draw_square(game_win, HEAD_PAIR, head_row, head_col, SH);
 
             // print food
-            wattron(game_win, COLOR_PAIR(FOOD_PAIR));
-            for (int i = 0; i < SCALING_FACT; i++)
-                for (int j = 0; j < COLS_PER_ROW*SCALING_FACT; j++)
-                    mvwaddch(game_win, food_row*SCALING_FACT+i, COLS_PER_ROW*SCALING_FACT*food_col + j, FD);
-            wattroff(game_win, COLOR_PAIR(BODY_PAIR));
+            draw_square(game_win, FOOD_PAIR, food_row, food_col, FD);
 
             wrefresh(game_win);
         }
@@ -375,7 +357,16 @@ int main()
     return 0;
 }
 
-static void draw_border(WINDOW* win, int rows, int cols, int stats_size)
+static void draw_square(WINDOW* win, const int color_pair, const int start_row, const int start_col, const char ch)
+{
+    wattron(win, COLOR_PAIR(color_pair));
+    for (int i = 0; i < SCALING_FACT; i++)
+        for (int j = 0; j < COLS_PER_ROW*SCALING_FACT; j++)
+            mvwaddch(win, start_row*SCALING_FACT+i, start_col*COLS_PER_ROW*SCALING_FACT + j, ch);
+    wattroff(win, COLOR_PAIR(color_pair));
+}
+
+static void draw_border(WINDOW* win, const int rows, const int cols, const int stats_size)
 {
     refresh();
     wmove(win, 0, 0);
@@ -415,11 +406,11 @@ static void draw_border(WINDOW* win, int rows, int cols, int stats_size)
     refresh();
 }
 
-static void pause_menu(WINDOW* win, int game_rows, int game_cols)
+static void pause_menu(WINDOW* win, const int game_rows, const int game_cols)
 {
     nodelay(stdscr, FALSE);
-    int cols = game_cols * COLS_PER_ROW * SCALING_FACT;
-    int rows = game_rows * SCALING_FACT;
+    const int cols = game_cols * COLS_PER_ROW * SCALING_FACT;
+    const int rows = game_rows * SCALING_FACT;
     mvwprintw(win, rows/2 -3, cols/2 - PAUSE_WIDTH/2,"========================================");
     mvwprintw(win, rows/2 -2, cols/2 - PAUSE_WIDTH/2,"+++++++++++Welcome to  jSnake+++++++++++");
     mvwprintw(win, rows/2 -1, cols/2 - PAUSE_WIDTH/2,"++++++++++++++Eat the Food++++++++++++++");
@@ -434,7 +425,7 @@ static void pause_menu(WINDOW* win, int game_rows, int game_cols)
     wclear(win);
 }
 
-static void update_stats(WINDOW* win, int score, int high_score, int game_rows, int game_cols)
+static void update_stats(WINDOW* win, const int score, const int high_score, const int game_rows, const int game_cols)
 {
     for (int i = 0; i < STATS_HEIGHT; i++)
     {
@@ -447,18 +438,18 @@ static void update_stats(WINDOW* win, int score, int high_score, int game_rows, 
     wrefresh(win);
 }
 
-static int lose_screen(WINDOW* win, int score, int high_score, int game_rows, int game_cols)
+static int lose_screen(WINDOW* win, const int score, const int high_score, const int game_rows, const int game_cols)
 {
     nodelay(stdscr, FALSE);
-    int a = 0;
-    int cols = game_cols * COLS_PER_ROW * SCALING_FACT;
-    int rows = game_rows * SCALING_FACT;
+    const int cols = game_cols * COLS_PER_ROW * SCALING_FACT;
+    const int rows = game_rows * SCALING_FACT;
     mvwprintw(win, rows/2 -2, cols/2 - PAUSE_WIDTH/2,"========================================");
     mvwprintw(win, rows/2 -1, cols/2 - PAUSE_WIDTH/2,"++You lost with a final score of %5d++", score);
     mvwprintw(win, rows/2 -0, cols/2 - PAUSE_WIDTH/2,"+Press Ret to  play again, or q to quit+" );
     mvwprintw(win, rows/2 +1, cols/2 - PAUSE_WIDTH/2,"+++++++++++High Score:  %5d+++++++++++", high_score);
     mvwprintw(win, rows/2 +2, cols/2 - PAUSE_WIDTH/2,"========================================");
     wrefresh(win);
+    int a = 0;
     while (a != '\n' && a != '\r' && a != 'q' && a != 'Q')
         a = getch();
     wclear  (win);
@@ -467,12 +458,12 @@ static int lose_screen(WINDOW* win, int score, int high_score, int game_rows, in
     return a;
 }
 
-static void victory(WINDOW* win, int game_rows, int game_cols)
+static void victory(WINDOW* win, const int game_rows, const int game_cols)
 {
     wclear (win);
     nodelay(stdscr, FALSE);
-    int cols = game_cols * COLS_PER_ROW * SCALING_FACT;
-    int rows = game_rows * SCALING_FACT;
+    const int cols = game_cols * COLS_PER_ROW * SCALING_FACT;
+    const int rows = game_rows * SCALING_FACT;
     mvwprintw(win, rows/2 -2, cols/2 - PAUSE_WIDTH/2,"========================================");
     mvwprintw(win, rows/2 -1, cols/2 - PAUSE_WIDTH/2,"++++++++++++A WINNER  IS YOU++++++++++++");
     mvwprintw(win, rows/2 -0, cols/2 - PAUSE_WIDTH/2,"++YOU FILLED THE ENTIRE  %3dx%2d FIELD!++", game_cols, game_rows );
@@ -484,10 +475,10 @@ static void victory(WINDOW* win, int game_rows, int game_cols)
     nodelay(stdscr, TRUE);
 }
 
-static void redraw_snake( WINDOW* win, const std::vector<Direction> &grid,  int game_rows,
-                          int game_cols, int head_row, int head_col  )
+static void redraw_snake(WINDOW* win, const std::vector<Direction> &grid,  const int game_rows,
+                         const int game_cols, const int head_row, int head_col)
 {
-    wattron( win, COLOR_PAIR( BODY_PAIR ) );
+    wattron(win, COLOR_PAIR(BODY_PAIR));
 
     for (int i = 0; i < game_rows*game_cols; i++)
     {
@@ -495,15 +486,11 @@ static void redraw_snake( WINDOW* win, const std::vector<Direction> &grid,  int 
         {
             for (int j = 0; j < SCALING_FACT; j++)
                 for (int k = 0; k < COLS_PER_ROW*SCALING_FACT; k++)
-                    mvwaddch(win, i/(game_cols)*SCALING_FACT+j, i%(game_cols)*COLS_PER_ROW*SCALING_FACT + k, SB);
+                    mvwaddch(win, (i/(game_cols))*SCALING_FACT+j, i%(game_cols)*COLS_PER_ROW*SCALING_FACT + k, SB);
         }
     }
 
     wattroff(win, COLOR_PAIR(BODY_PAIR));
 
-    wattron(win, COLOR_PAIR(HEAD_PAIR));
-    for (int i = 0; i < SCALING_FACT; i++)
-        for (int j = 0; j < COLS_PER_ROW*SCALING_FACT; j++)
-            mvwaddch(win, head_row * SCALING_FACT + i, head_col * COLS_PER_ROW*SCALING_FACT + j, SH);
-    wattroff(win, COLOR_PAIR(HEAD_PAIR));
+    draw_square(win, HEAD_PAIR, head_row, head_col, SH);
 }

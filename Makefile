@@ -1,7 +1,7 @@
 INSTALLDIR=/usr/local/bin
 
 CXX     :=g++
-CXXFLAGS:=-std=c++11 -Wall -Werror -Wextra -O3
+CXXFLAGS:=-std=c++17 -Wall -Werror -Wextra -O3
 LDFLAGS :=-lncurses
 
 MAIN:=jsnake
